@@ -1,0 +1,537 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2639
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\froman\fcharset0 Times-Roman;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww28600\viewh16380\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs24 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 <!DOCTYPE html>\
+<html lang="ca">\
+<head>\
+    <meta charset="UTF-8">\
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">\
+    <title>Study Planner Pro</title>\
+    <script src="https://cdn.tailwindcss.com"></script>\
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">\
+    <style>\
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');\
+        \
+        body \{\
+            font-family: 'Inter', sans-serif;\
+            background-color: #f1f5f9; /* Fons gris per defecte */\
+            color: #1e293b;\
+        \}\
+\
+        .custom-scrollbar::-webkit-scrollbar \{\
+            width: 6px;\
+        \}\
+        .custom-scrollbar::-webkit-scrollbar-track \{\
+            background: #f1f1f1;\
+        \}\
+        .custom-scrollbar::-webkit-scrollbar-thumb \{\
+            background: #cbd5e1;\
+            border-radius: 10px;\
+        \}\
+\
+        .modal-overlay \{\
+            background-color: rgba(15, 23, 42, 0.6);\
+            backdrop-filter: blur(8px);\
+        \}\
+\
+        .day-card \{\
+            background: white;\
+            border-radius: 16px;\
+            width: 75px;\
+            text-align: center;\
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);\
+            overflow: hidden;\
+            border: 1px solid #e2e8f0;\
+        \}\
+        .day-card-month \{\
+            background: #ef4444;\
+            color: white;\
+            font-size: 11px;\
+            font-weight: 800;\
+            text-transform: uppercase;\
+            padding: 4px 0;\
+        \}\
+        .day-card-number \{\
+            font-size: 28px;\
+            font-weight: 800;\
+            color: #1e293b;\
+            line-height: 1.2;\
+            padding: 6px 0;\
+        \}\
+\
+        .folder-card \{\
+            transition: transform 0.2s ease, box-shadow 0.2s ease;\
+            background: white;\
+        \}\
+        .folder-card:hover \{\
+            transform: translateY(-4px);\
+            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1);\
+        \}\
+\
+        .subject-dot \{\
+            width: 10px;\
+            height: 10px;\
+            border-radius: 50%;\
+            display: inline-block;\
+        \}\
+\
+        /* Millora de visibilitat del bot\'f3 d'eliminar */\
+        .btn-delete-grade \{\
+            opacity: 0.3;\
+            transition: all 0.2s ease;\
+        \}\
+        .group-item-grade:hover .btn-delete-grade \{\
+            opacity: 1;\
+        \}\
+        \
+        .grade-badge \{\
+            font-variant-numeric: tabular-nums;\
+        \}\
+    </style>\
+</head>\
+<body class="min-h-screen">\
+\
+    <div id="app" class="max-w-6xl mx-auto p-4 md:p-10">\
+        \
+        <!-- Cap\'e7alera -->\
+        <header class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">\
+            <div class="flex gap-6 items-center">\
+                <div id="dailyCalendar" class="day-card flex-shrink-0">\
+                    <div id="calMonth" class="day-card-month">---</div>\
+                    <div id="calDay" class="day-card-number">--</div>\
+                </div>\
+                \
+                <div>\
+                    <h1 class="text-4xl font-black text-slate-900 tracking-tight">Study<span class="text-indigo-600">Planner</span></h1>\
+                    <p class="text-slate-500 font-medium">El teu centre acad\'e8mic personalitzat</p>\
+                </div>\
+            </div>\
+            \
+            <div class="flex gap-3 self-end md:self-auto flex-wrap justify-end">\
+                <button onclick="openModal('notesModal')" class="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-5 py-2.5 rounded-2xl transition-all flex items-center gap-2 shadow-sm font-semibold">\
+                    <i class="fas fa-graduation-cap text-purple-500"></i> Qualificacions\
+                </button>\
+                <button onclick="openModal('subjectModal')" class="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-5 py-2.5 rounded-2xl transition-all flex items-center gap-2 shadow-sm font-semibold">\
+                    <i class="fas fa-folder-plus text-indigo-500"></i> Assignatura\
+                </button>\
+                <button onclick="openModal('taskModal')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-2xl transition-all flex items-center gap-2 shadow-lg shadow-indigo-200 font-bold">\
+                    <i class="fas fa-plus"></i> Nova Tasca\
+                </button>\
+            </div>\
+        </header>\
+\
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">\
+            \
+            <!-- Barra lateral de filtres -->\
+            <aside class="lg:col-span-3 space-y-6">\
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">\
+                    <h2 class="font-bold text-slate-900 mb-5 flex items-center gap-2">\
+                        <i class="fas fa-filter text-indigo-500"></i> Assignatures\
+                    </h2>\
+                    <div id="subjectFilters" class="space-y-1.5"></div>\
+                </div>\
+            </aside>\
+\
+            <!-- Contingut Principal (Tasques) -->\
+            <main class="lg:col-span-9 space-y-6">\
+                <div class="flex items-center justify-between px-2">\
+                    <h2 id="currentFilterTitle" class="text-2xl font-extrabold text-slate-800">Totes les tasques</h2>\
+                    <span id="taskCount" class="bg-indigo-100 text-indigo-600 text-sm font-bold px-4 py-1.5 rounded-full">0 pendents</span>\
+                </div>\
+\
+                <div id="tasksContainer" class="space-y-4"></div>\
+\
+                <div id="emptyState" class="hidden flex flex-col items-center justify-center py-24 bg-white/50 rounded-3xl border-2 border-dashed border-slate-200 text-slate-400">\
+                    <div class="bg-white p-6 rounded-full shadow-inner mb-4">\
+                        <i class="fas fa-check-double text-4xl opacity-20"></i>\
+                    </div>\
+                    <p class="font-medium">No hi ha feina pendent</p>\
+                </div>\
+            </main>\
+        </div>\
+    </div>\
+\
+    <!-- MODAL PRINCIPAL DE NOTES -->\
+    <div id="notesModal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">\
+        <div class="bg-slate-50 rounded-3xl w-full max-w-5xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">\
+            <div class="p-8 border-b border-slate-200 flex justify-between items-center bg-white">\
+                <div>\
+                    <h3 class="text-2xl font-black text-slate-900 flex items-center gap-3">\
+                        <i class="fas fa-chart-line text-purple-600"></i> Les meves Notes\
+                    </h3>\
+                    <p class="text-sm text-slate-500">Resultats acad\'e8mics organitzats</p>\
+                </div>\
+                <div class="flex gap-3">\
+                    <button onclick="openModal('addGradeModal')" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 font-bold shadow-md">\
+                        <i class="fas fa-plus-circle"></i> Afegir Nota\
+                    </button>\
+                    <button onclick="closeModal('notesModal')" class="bg-slate-100 text-slate-500 hover:bg-slate-200 p-2.5 rounded-xl transition-all">\
+                        <i class="fas fa-times text-lg"></i>\
+                    </button>\
+                </div>\
+            </div>\
+            \
+            <div id="notesContent" class="flex-1 overflow-y-auto p-8 custom-scrollbar">\
+                <div id="foldersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>\
+                <div id="notesEmptyState" class="hidden flex flex-col items-center justify-center py-20 text-slate-400 bg-white rounded-3xl border border-slate-200">\
+                    <i class="fas fa-layer-group text-5xl mb-4 opacity-10"></i>\
+                    <p class="font-medium">Encara no has registrat cap nota</p>\
+                </div>\
+            </div>\
+        </div>\
+    </div>\
+\
+    <!-- MODAL PER AFEGIR NOTA -->\
+    <div id="addGradeModal" class="fixed inset-0 modal-overlay z-[60] hidden flex items-center justify-center p-4">\
+        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">\
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">\
+                <h3 class="text-xl font-bold">Nou registre</h3>\
+                <button onclick="closeModal('addGradeModal')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>\
+            </div>\
+            <form id="gradeForm" class="p-8 space-y-5">\
+                <div>\
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tipus</label>\
+                    <div class="grid grid-cols-2 gap-3">\
+                        <label class="cursor-pointer">\
+                            <input type="radio" name="gradeType" value="tasca" checked class="hidden peer">\
+                            <div class="text-center p-3 border-2 rounded-2xl peer-checked:bg-indigo-50 peer-checked:border-indigo-500 peer-checked:text-indigo-700 font-bold text-sm transition-all">Tasca</div>\
+                        </label>\
+                        <label class="cursor-pointer">\
+                            <input type="radio" name="gradeType" value="examen" class="hidden peer">\
+                            <div class="text-center p-3 border-2 rounded-2xl peer-checked:bg-red-50 peer-checked:border-red-500 peer-checked:text-red-700 font-bold text-sm transition-all">Examen</div>\
+                        </label>\
+                    </div>\
+                </div>\
+\
+                <div>\
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Assignatura</label>\
+                    <select id="gradeSubject" required class="w-full px-4 py-3 border-2 border-slate-100 rounded-2xl bg-slate-50 outline-none focus:border-purple-500 transition-all"></select>\
+                </div>\
+\
+                <div>\
+                    <label id="labelName" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nom de l'activitat</label>\
+                    <input type="text" id="gradeName" required class="w-full px-4 py-3 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:border-purple-500 outline-none transition-all" placeholder="Ex: Unitat 2 - Geometria">\
+                </div>\
+\
+                <div class="grid grid-cols-2 gap-4">\
+                    <div>\
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nota</label>\
+                        <input type="number" step="0.01" min="0" max="10" id="gradeValue" required class="w-full px-4 py-3 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:border-purple-500 outline-none transition-all" placeholder="0.0">\
+                    </div>\
+                    <div>\
+                        <label id="labelDate" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Data</label>\
+                        <input type="date" id="gradeDate" required class="w-full px-4 py-3 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:border-purple-500 outline-none transition-all">\
+                    </div>\
+                </div>\
+\
+                <button type="submit" class="w-full py-4 bg-purple-600 text-white rounded-2xl hover:bg-purple-700 font-bold shadow-xl shadow-purple-200 transition-all active:scale-[0.98] mt-4">\
+                    Guardar nota\
+                </button>\
+            </form>\
+        </div>\
+    </div>\
+\
+    <!-- Modals de configuraci\'f3 d'assignatures i tasques -->\
+    <div id="subjectModal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">\
+        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">\
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">\
+                <h3 class="text-xl font-bold">Nova Assignatura</h3>\
+                <button onclick="closeModal('subjectModal')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>\
+            </div>\
+            <form id="subjectForm" class="p-8 space-y-5">\
+                <div>\
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nom</label>\
+                    <input type="text" id="subjName" required class="w-full px-4 py-3 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:border-indigo-500 outline-none transition-all" placeholder="Ex: Biologia">\
+                </div>\
+                <div>\
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Color</label>\
+                    <input type="color" id="subjColor" class="h-14 w-full rounded-2xl cursor-pointer border-2 border-slate-100 bg-white p-1" value="#6366f1">\
+                </div>\
+                <button type="submit" class="w-full py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 font-bold shadow-lg shadow-indigo-100 transition-all mt-4">Afegir Assignatura</button>\
+            </form>\
+        </div>\
+    </div>\
+\
+    <div id="taskModal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">\
+        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">\
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">\
+                <h3 class="text-xl font-bold">Afegir Tasca</h3>\
+                <button onclick="closeModal('taskModal')" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>\
+            </div>\
+            <form id="taskForm" class="p-8 space-y-5">\
+                <div>\
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Descripci\'f3</label>\
+                    <input type="text" id="taskTitle" required class="w-full px-4 py-3 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:border-indigo-500 outline-none transition-all" placeholder="Qu\'e8 has de fer?">\
+                </div>\
+                <div class="grid grid-cols-2 gap-4">\
+                    <div>\
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tipus</label>\
+                        <select id="taskType" class="w-full px-4 py-3 border-2 border-slate-100 rounded-2xl bg-slate-50 outline-none focus:border-indigo-500 transition-all">\
+                            <option value="tasca">Tasca</option>\
+                            <option value="examen">Examen</option>\
+                        </select>\
+                    </div>\
+                    <div>\
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Data L\'edmit</label>\
+                        <input type="date" id="taskDate" required class="w-full px-4 py-3 border-2 border-slate-100 rounded-2xl bg-slate-50 focus:border-indigo-500 outline-none transition-all">\
+                    </div>\
+                </div>\
+                <div>\
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Assignatura</label>\
+                    <select id="taskSubject" required class="w-full px-4 py-3 border-2 border-slate-100 rounded-2xl bg-slate-50 outline-none focus:border-indigo-500 transition-all"></select>\
+                </div>\
+                <button type="submit" class="w-full py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 font-bold shadow-lg shadow-indigo-100 transition-all mt-4">Crear Tasca</button>\
+            </form>\
+        </div>\
+    </div>\
+\
+    <script>\
+        // --- ESTAT DE L'APLICACI\'d3 ---\
+        let subjects = JSON.parse(localStorage.getItem('study_subjects')) || [\
+            \{ id: '1', name: 'General', color: '#6366f1' \}\
+        ];\
+        let tasks = JSON.parse(localStorage.getItem('study_tasks')) || [];\
+        let grades = JSON.parse(localStorage.getItem('study_grades')) || [];\
+        let currentFilter = 'all';\
+\
+        // --- INICIALITZACI\'d3 ---\
+        function init() \{\
+            updateDailyCalendar();\
+            renderSubjects();\
+            renderTasks();\
+            updateDropdowns();\
+            renderNotes();\
+            \
+            // Canvis d'etiquetes segons tipus\
+            document.querySelectorAll('input[name="gradeType"]').forEach(radio => \{\
+                radio.addEventListener('change', (e) => \{\
+                    const isExamen = e.target.value === 'examen';\
+                    document.getElementById('labelName').innerText = isExamen ? "Nom de l'examen" : "Nom de la tasca";\
+                    document.getElementById('labelDate').innerText = isExamen ? "Data de l'examen" : "Data d'entrega";\
+                \});\
+            \});\
+        \}\
+\
+        // --- LOGICA DE CALENDARI ---\
+        function updateDailyCalendar() \{\
+            const now = new Date();\
+            const monthNames = ["Gen", "Feb", "Mar", "Abr", "Maig", "Jun", "Jul", "Ago", "Set", "Oct", "Nov", "Des"];\
+            document.getElementById('calMonth').innerText = monthNames[now.getMonth()];\
+            document.getElementById('calDay').innerText = now.getDate();\
+        \}\
+\
+        // --- PERSIST\'c8NCIA ---\
+        function saveData() \{\
+            localStorage.setItem('study_subjects', JSON.stringify(subjects));\
+            localStorage.setItem('study_tasks', JSON.stringify(tasks));\
+            localStorage.setItem('study_grades', JSON.stringify(grades));\
+        \}\
+\
+        // --- MODALS ---\
+        function openModal(id) \{ \
+            const modal = document.getElementById(id);\
+            modal.classList.remove('hidden');\
+            modal.classList.add('flex');\
+        \}\
+        function closeModal(id) \{ \
+            const modal = document.getElementById(id);\
+            modal.classList.add('hidden');\
+            modal.classList.remove('flex');\
+        \}\
+\
+        // --- GESTI\'d3 DE FORMULARIS ---\
+        document.getElementById('subjectForm').onsubmit = (e) => \{\
+            e.preventDefault();\
+            subjects.push(\{\
+                id: Date.now().toString(),\
+                name: document.getElementById('subjName').value,\
+                color: document.getElementById('subjColor').value\
+            \});\
+            saveData(); renderSubjects(); updateDropdowns(); renderNotes();\
+            closeModal('subjectModal');\
+            document.getElementById('subjectForm').reset();\
+        \};\
+\
+        document.getElementById('taskForm').onsubmit = (e) => \{\
+            e.preventDefault();\
+            tasks.push(\{\
+                id: Date.now().toString(),\
+                title: document.getElementById('taskTitle').value,\
+                date: document.getElementById('taskDate').value,\
+                type: document.getElementById('taskType').value,\
+                subjectId: document.getElementById('taskSubject').value\
+            \});\
+            saveData(); renderTasks(); renderSubjects(); closeModal('taskModal');\
+            document.getElementById('taskForm').reset();\
+        \};\
+\
+        document.getElementById('gradeForm').onsubmit = (e) => \{\
+            e.preventDefault();\
+            const type = document.querySelector('input[name="gradeType"]:checked').value;\
+            grades.push(\{\
+                id: Date.now().toString(),\
+                type: type,\
+                subjectId: document.getElementById('gradeSubject').value,\
+                name: document.getElementById('gradeName').value,\
+                value: document.getElementById('gradeValue').value,\
+                date: document.getElementById('gradeDate').value\
+            \});\
+            saveData(); renderNotes(); closeModal('addGradeModal');\
+            document.getElementById('gradeForm').reset();\
+        \};\
+\
+        // --- FUNCIONS D'ELIMINACI\'d3 ---\
+        window.deleteGrade = function(id) \{\
+            if(confirm("Vols eliminar definitivament aquesta nota?")) \{\
+                grades = grades.filter(g => g.id !== id);\
+                saveData();\
+                renderNotes();\
+            \}\
+        \};\
+\
+        window.deleteTask = function(id) \{ \
+            tasks = tasks.filter(t => t.id !== id); \
+            saveData(); renderTasks(); renderSubjects(); \
+        \};\
+\
+        // --- RENDERITZACI\'d3 DE LA INTERFICIE ---\
+        function renderSubjects() \{\
+            const container = document.getElementById('subjectFilters');\
+            container.innerHTML = `\
+                <button onclick="setFilter('all')" class="w-full text-left p-4 rounded-2xl transition-all flex items-center justify-between group $\{currentFilter === 'all' ? 'bg-indigo-600 text-white font-bold shadow-lg' : 'hover:bg-slate-100 text-slate-600'\}">\
+                    <span class="flex items-center gap-3"><i class="fas fa-list-ul"></i> Totes</span>\
+                    <span class="text-xs $\{currentFilter === 'all' ? 'bg-indigo-500' : 'bg-slate-200'\} px-2 py-0.5 rounded-full">$\{tasks.length\}</span>\
+                </button>\
+            `;\
+            \
+            subjects.forEach(s => \{\
+                const count = tasks.filter(t => t.subjectId === s.id).length;\
+                container.innerHTML += `\
+                    <button onclick="setFilter('$\{s.id\}')" class="w-full text-left p-4 rounded-2xl transition-all flex items-center justify-between group $\{currentFilter === s.id ? 'bg-indigo-600 text-white font-bold shadow-lg' : 'hover:bg-slate-100 text-slate-600'\}">\
+                        <span class="flex items-center gap-3">\
+                            <span class="subject-dot" style="background:$\{currentFilter === s.id ? 'white' : s.color\}"></span> \
+                            <span class="truncate">$\{s.name\}</span>\
+                        </span>\
+                        <span class="text-xs $\{currentFilter === s.id ? 'bg-indigo-500' : 'bg-slate-200'\} px-2 py-0.5 rounded-full">$\{count\}</span>\
+                    </button>`;\
+            \});\
+        \}\
+\
+        function setFilter(id) \{ \
+            currentFilter = id; \
+            const s = subjects.find(sub => sub.id === id);\
+            document.getElementById('currentFilterTitle').innerText = s ? s.name : "Totes les tasques";\
+            renderSubjects(); \
+            renderTasks(); \
+        \}\
+\
+        function renderTasks() \{\
+            const container = document.getElementById('tasksContainer');\
+            const empty = document.getElementById('emptyState');\
+            let filtered = currentFilter === 'all' ? tasks : tasks.filter(t => t.subjectId === currentFilter);\
+            \
+            container.innerHTML = "";\
+            if (filtered.length === 0) \{\
+                empty.classList.remove('hidden');\
+            \} else \{\
+                empty.classList.add('hidden');\
+                filtered.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(t => \{\
+                    const s = subjects.find(sub => sub.id === t.subjectId) || subjects[0];\
+                    container.innerHTML += `\
+                        <div class="bg-white p-5 rounded-3xl border border-slate-100 flex justify-between items-center shadow-sm hover:shadow-md transition-all group">\
+                            <div class="flex items-center gap-5">\
+                                <div class="w-1.5 h-12 rounded-full" style="background:$\{s.color\}"></div>\
+                                <div>\
+                                    <h4 class="font-bold text-slate-800 text-lg">$\{t.title\}</h4>\
+                                    <p class="text-sm text-slate-400 font-medium flex items-center gap-3">\
+                                        <span><i class="far fa-calendar-alt text-indigo-400"></i> $\{formatDate(t.date)\}</span>\
+                                        <span class="uppercase text-xs tracking-widest text-indigo-500 font-black">$\{t.type\}</span>\
+                                    </p>\
+                                </div>\
+                            </div>\
+                            <button onclick="deleteTask('$\{t.id\}')" class="w-10 h-10 rounded-2xl flex items-center justify-center text-slate-300 hover:text-green-600 hover:bg-green-50 transition-all opacity-0 group-hover:opacity-100">\
+                                <i class="fas fa-check text-lg"></i>\
+                            </button>\
+                        </div>\
+                    `;\
+                \});\
+            \}\
+            document.getElementById('taskCount').innerText = `$\{filtered.length\} pendents`;\
+        \}\
+\
+        function renderNotes() \{\
+            const container = document.getElementById('foldersContainer');\
+            const empty = document.getElementById('notesEmptyState');\
+            container.innerHTML = "";\
+            \
+            if (subjects.length === 0 || grades.length === 0) \{\
+                empty.classList.remove('hidden');\
+                return;\
+            \}\
+            empty.classList.add('hidden');\
+\
+            subjects.forEach(s => \{\
+                const subGrades = grades.filter(g => g.subjectId === s.id);\
+                if (subGrades.length === 0) return;\
+\
+                const avg = subGrades.reduce((acc, curr) => acc + parseFloat(curr.value), 0) / subGrades.length;\
+                \
+                let gradesListHtml = subGrades.map(g => `\
+                    <div class="group-item-grade flex items-center justify-between p-3 bg-slate-50/50 rounded-2xl hover:bg-white transition-all border border-transparent hover:border-slate-100">\
+                        <div class="flex-1">\
+                            <div class="flex items-center gap-2 mb-0.5">\
+                                <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded $\{g.type === 'examen' ? 'bg-red-100 text-red-600' : 'bg-indigo-100 text-indigo-600'\}">$\{g.type\}</span>\
+                                <span class="text-sm font-bold text-slate-700 truncate max-w-[120px]">$\{g.name\}</span>\
+                            </div>\
+                            <span class="text-[10px] text-slate-400 font-semibold">$\{formatDate(g.date)\}</span>\
+                        </div>\
+                        <div class="flex items-center gap-3">\
+                            <span class="grade-badge text-sm font-black $\{parseFloat(g.value) >= 5 ? 'text-green-600' : 'text-red-500'\} bg-white px-2 py-1 rounded-lg shadow-sm">$\{parseFloat(g.value).toFixed(1)\}</span>\
+                            <button onclick="deleteGrade('$\{g.id\}'); event.stopPropagation();" class="btn-delete-grade w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 hover:text-red-600 hover:bg-red-50 transition-all">\
+                                <i class="fas fa-trash-alt text-xs"></i>\
+                            </button>\
+                        </div>\
+                    </div>\
+                `).join('');\
+\
+                container.innerHTML += `\
+                    <div class="folder-card rounded-3xl overflow-hidden border border-slate-200 flex flex-col">\
+                        <div class="p-4 flex items-center justify-between" style="background: $\{s.color\}10; border-bottom: 3px solid $\{s.color\}">\
+                            <div class="flex items-center gap-3">\
+                                <div class="p-2 rounded-xl bg-white shadow-sm"><i class="fas fa-folder text-lg" style="color: $\{s.color\}"></i></div>\
+                                <div>\
+                                    <h4 class="font-black text-slate-800 text-sm leading-tight">$\{s.name\}</h4>\
+                                    <p class="text-[10px] text-slate-500 font-bold">Mitjana: $\{avg.toFixed(2)\}</p>\
+                                </div>\
+                            </div>\
+                        </div>\
+                        <div class="p-4 space-y-2 bg-white flex-1">\
+                            $\{gradesListHtml\}\
+                        </div>\
+                    </div>\
+                `;\
+            \});\
+        \}\
+\
+        // --- UTILITATS ---\
+        function updateDropdowns() \{ \
+            const html = subjects.map(s => `<option value="$\{s.id\}">$\{s.name\}</option>`).join('');\
+            document.getElementById('taskSubject').innerHTML = html;\
+            document.getElementById('gradeSubject').innerHTML = html;\
+        \}\
+\
+        function formatDate(d) \{ \
+            if(!d) return "--";\
+            return new Date(d).toLocaleDateString('ca-ES', \{ day: '2-digit', month: 'short' \}); \
+        \}\
+\
+        window.onload = init;\
+    </script>\
+</body>\
+</html>}
